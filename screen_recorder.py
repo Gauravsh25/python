@@ -34,7 +34,7 @@ class ScreenRecorder:
         
         # Create filename with current date and time
         current_time = datetime.datetime.now()
-        self.filename = f"{self.username}_{current_time.strftime('%Y%m%d_%H%M%S')}.avi"
+        self.filename = f"{self.username}_{current_time.strftime('%Y-%m-%d_%H-%M-%S')}.avi"
         self.filepath = os.path.join(self.output_folder, self.filename)
         
         print(f"Output file: {self.filepath}")
@@ -94,7 +94,7 @@ class ScreenRecorder:
         return False
     
     def add_watermark(self, frame):
-        """Add username and live clock watermark to the frame"""
+        """Add transparent username and live clock watermark to the frame"""
         try:
             # Get current time
             current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -113,13 +113,25 @@ class ScreenRecorder:
             username_pos = (20, 40)
             time_pos = (20, 80)
             
-            # Add background rectangles for better visibility
-            cv2.rectangle(frame, (10, 10), (400, 100), (0, 0, 0), -1)  # Black background
-            cv2.rectangle(frame, (10, 10), (400, 100), (255, 255, 255), 2)  # White border
+            # Create a transparent overlay
+            overlay = frame.copy()
+            alpha = 0.3  # Transparency level (0.0 = fully transparent, 1.0 = fully opaque)
             
-            # Add text
-            cv2.putText(frame, username_text, username_pos, font, font_scale, color, thickness)
-            cv2.putText(frame, time_text, time_pos, font, font_scale, color, thickness)
+            # Add semi-transparent background rectangle
+            cv2.rectangle(overlay, (10, 10), (400, 100), (0, 0, 0), -1)  # Black background
+            
+            # Blend the overlay with the original frame for transparency
+            cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
+            
+            # Add transparent text
+            # Create text overlay
+            text_overlay = frame.copy()
+            cv2.putText(text_overlay, username_text, username_pos, font, font_scale, color, thickness)
+            cv2.putText(text_overlay, time_text, time_pos, font, font_scale, color, thickness)
+            
+            # Blend text with transparency
+            text_alpha = 0.7  # Text transparency (higher value = more visible)
+            cv2.addWeighted(text_overlay, text_alpha, frame, 1 - text_alpha, 0, frame)
             
             return frame
         except Exception as e:
