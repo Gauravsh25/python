@@ -7,15 +7,22 @@ import getpass
 import time
 from PIL import Image, ImageDraw, ImageFont
 import sys
+import logging
+import threading
+import signal
 
-class ScreenRecorder:
+class AutoScreenRecorder:
     def __init__(self):
         self.username = getpass.getuser()
         self.recording = False
-        self.output_folder = f"D:\\{self.username}"
+        self.output_folder = f"D:\\ScreenRecordings\\{self.username}"
         self.video_writer = None
+        self.setup_logging()
         
-        print(f"Detected username: {self.username}")
+        # Wait for system to fully load after login
+        time.sleep(30)  # 30 second delay after login
+        
+        self.log(f"Auto-recorder started for user: {self.username}")
         
         # Check and setup output folder
         if not self.setup_output_folder():
@@ -24,40 +31,70 @@ class ScreenRecorder:
         # Get screen dimensions
         try:
             self.screen_width, self.screen_height = pyautogui.size()
-            print(f"Screen resolution: {self.screen_width}x{self.screen_height}")
+            self.log(f"Screen resolution: {self.screen_width}x{self.screen_height}")
         except Exception as e:
-            print(f"Error getting screen size: {e}")
+            self.log(f"Error getting screen size: {e}")
             return
         
         # Video settings
-        self.fps = 10  # Reduced FPS for better performance
+        self.fps = 10
         
         # Create filename with current date and time
         current_time = datetime.datetime.now()
         self.filename = f"{self.username}_{current_time.strftime('%Y-%m-%d_%H-%M-%S')}.avi"
         self.filepath = os.path.join(self.output_folder, self.filename)
         
-        print(f"Output file: {self.filepath}")
+        self.log(f"Output file: {self.filepath}")
         
-        # Initialize video writer with different codecs (try multiple)
+        # Initialize video writer
         self.init_video_writer()
+        
+        # Setup signal handlers for graceful shutdown
+        signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGTERM, self.signal_handler)
+    
+    def setup_logging(self):
+        """Setup logging to file"""
+        log_dir = f"D:\\ScreenRecordings\\Logs"
+        if not os.path.exists(log_dir):
+            try:
+                os.makedirs(log_dir)
+            except:
+                log_dir = "."  # Use current directory if D drive not available
+        
+        log_file = os.path.join(log_dir, f"screen_recorder_{datetime.datetime.now().strftime('%Y-%m-%d')}.log")
+        
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.FileHandler(log_file),
+                logging.StreamHandler()  # Also log to console
+            ]
+        )
+        self.logger = logging.getLogger(__name__)
+    
+    def log(self, message):
+        """Log message"""
+        self.logger.info(message)
     
     def setup_output_folder(self):
         """Create output folder if it doesn't exist"""
         try:
             # Check if D drive exists
             if not os.path.exists("D:\\"):
-                print("D:\\ drive not found. Using current directory instead.")
-                self.output_folder = f".\\{self.username}"
+                self.log("D:\\ drive not found. Using Documents folder instead.")
+                documents_path = os.path.join(os.path.expanduser("~"), "Documents")
+                self.output_folder = os.path.join(documents_path, "ScreenRecordings", self.username)
             
             if not os.path.exists(self.output_folder):
                 os.makedirs(self.output_folder)
-                print(f"Created folder: {self.output_folder}")
+                self.log(f"Created folder: {self.output_folder}")
             else:
-                print(f"Using existing folder: {self.output_folder}")
+                self.log(f"Using existing folder: {self.output_folder}")
             return True
         except Exception as e:
-            print(f"Error creating folder: {e}")
+            self.log(f"Error creating folder: {e}")
             return False
     
     def init_video_writer(self):
@@ -65,13 +102,12 @@ class ScreenRecorder:
         codecs_to_try = [
             ('XVID', cv2.VideoWriter_fourcc(*'XVID')),
             ('MJPG', cv2.VideoWriter_fourcc(*'MJPG')),
-            ('MP4V', cv2.VideoWriter_fourcc(*'mp4v')),
-            ('X264', cv2.VideoWriter_fourcc(*'X264'))
+            ('MP4V', cv2.VideoWriter_fourcc(*'mp4v'))
         ]
         
         for codec_name, fourcc in codecs_to_try:
             try:
-                print(f"Trying codec: {codec_name}")
+                self.log(f"Trying codec: {codec_name}")
                 self.video_writer = cv2.VideoWriter(
                     self.filepath,
                     fourcc,
@@ -79,18 +115,17 @@ class ScreenRecorder:
                     (self.screen_width, self.screen_height)
                 )
                 
-                # Test if the writer is opened successfully
                 if self.video_writer.isOpened():
-                    print(f"Successfully initialized with {codec_name} codec")
+                    self.log(f"Successfully initialized with {codec_name} codec")
                     return True
                 else:
                     self.video_writer.release()
                     
             except Exception as e:
-                print(f"Failed to initialize with {codec_name}: {e}")
+                self.log(f"Failed to initialize with {codec_name}: {e}")
                 continue
         
-        print("Error: Could not initialize video writer with any codec")
+        self.log("Error: Could not initialize video writer with any codec")
         return False
     
     def add_watermark(self, frame):
@@ -115,43 +150,40 @@ class ScreenRecorder:
             
             # Create a transparent overlay
             overlay = frame.copy()
-            alpha = 0.3  # Transparency level (0.0 = fully transparent, 1.0 = fully opaque)
+            alpha = 0.3  # Transparency level
             
             # Add semi-transparent background rectangle
-            cv2.rectangle(overlay, (10, 10), (400, 100), (0, 0, 0), -1)  # Black background
+            cv2.rectangle(overlay, (10, 10), (400, 100), (0, 0, 0), -1)
             
             # Blend the overlay with the original frame for transparency
             cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
             
             # Add transparent text
-            # Create text overlay
             text_overlay = frame.copy()
             cv2.putText(text_overlay, username_text, username_pos, font, font_scale, color, thickness)
             cv2.putText(text_overlay, time_text, time_pos, font, font_scale, color, thickness)
             
             # Blend text with transparency
-            text_alpha = 0.7  # Text transparency (higher value = more visible)
+            text_alpha = 0.7
             cv2.addWeighted(text_overlay, text_alpha, frame, 1 - text_alpha, 0, frame)
             
             return frame
         except Exception as e:
-            print(f"Error adding watermark: {e}")
+            self.log(f"Error adding watermark: {e}")
             return frame
     
     def record_screen(self):
         """Main recording function"""
         if self.video_writer is None or not self.video_writer.isOpened():
-            print("Error: Video writer not initialized properly")
+            self.log("Error: Video writer not initialized properly")
             return
         
-        print("Starting screen recording...")
-        print("Press Ctrl+C to stop recording")
-        
+        self.log("Starting automatic screen recording...")
         self.recording = True
         frame_count = 0
+        last_log_time = time.time()
         
         try:
-            # Disable pyautogui failsafe
             pyautogui.FAILSAFE = False
             
             while self.recording:
@@ -173,21 +205,22 @@ class ScreenRecorder:
                     
                     frame_count += 1
                     
-                    # Print progress every 50 frames
-                    if frame_count % 50 == 0:
-                        print(f"Recorded {frame_count} frames...")
+                    # Log progress every 5 minutes (3000 frames at 10fps)
+                    current_time = time.time()
+                    if current_time - last_log_time >= 300:  # 5 minutes
+                        self.log(f"Recording in progress... {frame_count} frames captured")
+                        last_log_time = current_time
                     
                     # Control frame rate
                     time.sleep(1/self.fps)
                     
                 except Exception as e:
-                    print(f"Error capturing frame: {e}")
-                    break
+                    self.log(f"Error capturing frame: {e}")
+                    time.sleep(1)  # Wait a bit before retrying
+                    continue
                     
-        except KeyboardInterrupt:
-            print(f"\nRecording stopped by user after {frame_count} frames")
         except Exception as e:
-            print(f"Error during recording: {e}")
+            self.log(f"Error during recording: {e}")
         finally:
             self.stop_recording()
     
@@ -198,78 +231,43 @@ class ScreenRecorder:
             self.video_writer.release()
         cv2.destroyAllWindows()
         
-        print(f"\nRecording saved to: {self.filepath}")
+        self.log(f"Recording saved to: {self.filepath}")
         
         # Check if file was created and show file size
         if os.path.exists(self.filepath):
             file_size = os.path.getsize(self.filepath)
             if file_size > 0:
-                print(f"File size: {file_size / (1024 * 1024):.2f} MB")
-                print("Recording completed successfully!")
+                self.log(f"File size: {file_size / (1024 * 1024):.2f} MB")
+                self.log("Recording completed successfully!")
             else:
-                print("Warning: Output file is empty (0 bytes)")
+                self.log("Warning: Output file is empty (0 bytes)")
         else:
-            print("Error: Output file was not created")
-
-def check_dependencies():
-    """Check if all required packages are installed"""
-    required_packages = {
-        'cv2': 'opencv-python',
-        'numpy': 'numpy',
-        'PIL': 'Pillow',
-        'pyautogui': 'pyautogui'
-    }
+            self.log("Error: Output file was not created")
     
-    missing_packages = []
-    
-    for package, pip_name in required_packages.items():
-        try:
-            __import__(package)
-            print(f"✓ {pip_name} is installed")
-        except ImportError:
-            missing_packages.append(pip_name)
-            print(f"✗ {pip_name} is NOT installed")
-    
-    if missing_packages:
-        print(f"\nPlease install missing packages:")
-        print(f"pip install {' '.join(missing_packages)}")
-        return False
-    
-    return True
+    def signal_handler(self, signum, frame):
+        """Handle system shutdown signals"""
+        self.log(f"Received signal {signum}, stopping recording...")
+        self.recording = False
 
 def main():
-    """Main function to run the screen recorder"""
-    print("=== Screen Recorder with Watermark ===")
-    print("Checking dependencies...")
-    
-    if not check_dependencies():
-        return
-    
-    print("\nAll dependencies are installed!")
-    print("Initializing screen recorder...")
-    
+    """Main function for auto-start recording"""
     try:
         # Create recorder instance
-        recorder = ScreenRecorder()
+        recorder = AutoScreenRecorder()
         
         # Check if initialization was successful
         if recorder.video_writer is None:
-            print("Failed to initialize recorder. Please check the error messages above.")
+            recorder.log("Failed to initialize recorder.")
             return
         
-        # Start recording
-        print("\nStarting recording in 3 seconds...")
-        for i in range(3, 0, -1):
-            print(f"{i}...")
-            time.sleep(1)
-        
-        print("Recording started!")
+        # Start recording automatically
+        recorder.log("Auto-recording will start now...")
         recorder.record_screen()
         
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        logging.error(f"Unexpected error: {e}")
         import traceback
-        traceback.print_exc()
+        logging.error(traceback.format_exc())
 
 if __name__ == "__main__":
     main()
