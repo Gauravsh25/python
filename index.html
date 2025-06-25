@@ -3,137 +3,238 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login Page</title>
+  <title>Login & Register</title>
   <style>
     * {
       box-sizing: border-box;
     }
 
     body {
-      font-family: Arial, sans-serif;
-      background-color: #eef2f5;
       margin: 0;
       padding: 0;
-      height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #ffecd2, #fcb69f);
       display: flex;
       justify-content: center;
       align-items: center;
+      height: 100vh;
     }
 
     .container {
-      background: white;
+      background: #fff;
       padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
       width: 100%;
-      max-width: 400px;
+      max-width: 450px;
+      animation: fadeIn 0.8s ease;
     }
 
     h2 {
       text-align: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
+      color: #ff6f61;
     }
 
     .form-group {
-      margin-bottom: 1.2rem;
+      margin-bottom: 1rem;
     }
 
     label {
       display: block;
-      margin-bottom: 0.5rem;
-      font-weight: bold;
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+      color: #444;
     }
 
+    input[type="text"],
     input[type="email"],
-    input[type="password"] {
+    input[type="password"],
+    input[type="tel"],
+    textarea,
+    select {
       width: 100%;
       padding: 0.6rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
+      border: 1.5px solid #ccc;
+      border-radius: 8px;
       font-size: 1rem;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: #ff6f61;
+      outline: none;
     }
 
     button {
       width: 100%;
-      padding: 0.7rem;
-      background-color: #007bff;
+      padding: 0.75rem;
+      background: linear-gradient(to right, #ff6f61, #ff9472);
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 1rem;
+      font-weight: bold;
       cursor: pointer;
     }
 
     button:hover {
-      background-color: #0056b3;
+      background: linear-gradient(to right, #ff9472, #ff6f61);
+    }
+
+    .error, .success {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 0.9rem;
     }
 
     .error {
       color: red;
-      text-align: center;
-      margin-top: 10px;
     }
 
-    .welcome-message {
+    .success {
+      color: green;
+    }
+
+    .toggle-link {
       text-align: center;
+      margin-top: 1rem;
+      color: #0077cc;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .hidden {
       display: none;
     }
 
-    .welcome-message h1 {
-      color: #333;
-    }
-
-    .welcome-message p {
-      margin-top: 1rem;
-      color: #555;
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
 
-  <div class="container" id="loginBox">
-    <h2>Login</h2>
-    <form id="loginForm">
+  <div class="container">
+    <!-- Login Form -->
+    <div id="loginForm">
+      <h2>🔐 Login</h2>
       <div class="form-group">
-        <label for="email">Email ID</label>
-        <input type="email" id="email" required placeholder="Enter your email" />
+        <label for="loginEmail">Email ID</label>
+        <input type="email" id="loginEmail" required />
       </div>
       <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" required placeholder="Enter your password" />
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" required />
       </div>
-      <button type="submit">Login</button>
-      <div class="error" id="errorMessage"></div>
-    </form>
-  </div>
+      <button onclick="handleLogin()">Login</button>
+      <div id="loginMessage" class="error"></div>
+      <div class="toggle-link" onclick="toggleForms()">Don't have an account? Register here</div>
+    </div>
 
-  <div class="container welcome-message" id="welcomeBox">
-    <h1>Welcome, Gaurav!</h1>
-    <p>You have successfully logged in.</p>
+    <!-- Register Form -->
+    <div id="registerForm" class="hidden">
+      <h2>📝 Register</h2>
+      <div class="form-group">
+        <label>First Name</label>
+        <input type="text" id="firstName" required />
+      </div>
+      <div class="form-group">
+        <label>Last Name</label>
+        <input type="text" id="lastName" required />
+      </div>
+      <div class="form-group">
+        <label>Email ID</label>
+        <input type="email" id="registerEmail" required />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="registerPassword" required />
+      </div>
+      <div class="form-group">
+        <label>Mobile Number</label>
+        <input type="tel" id="mobile" required pattern="[0-9]{10}" />
+      </div>
+      <div class="form-group">
+        <label>Address</label>
+        <textarea id="address" rows="2" required></textarea>
+      </div>
+      <div class="form-group">
+        <label>Gender</label>
+        <select id="gender" required>
+          <option value="">Select</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+      </div>
+      <button onclick="handleRegister()">Register</button>
+      <div id="registerMessage" class="success"></div>
+      <div class="toggle-link" onclick="toggleForms()">Already have an account? Login</div>
+    </div>
   </div>
 
   <script>
-    const loginForm = document.getElementById('loginForm');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const errorMessage = document.getElementById('errorMessage');
-    const loginBox = document.getElementById('loginBox');
-    const welcomeBox = document.getElementById('welcomeBox');
+    // User data store (in-memory, resets on refresh)
+    let users = [
+      { email: "gauravsharma25861@gmail.com", password: "123456" }
+    ];
 
-    loginForm.addEventListener('submit', function (e) {
-      e.preventDefault();
+    function toggleForms() {
+      document.getElementById('loginForm').classList.toggle('hidden');
+      document.getElementById('registerForm').classList.toggle('hidden');
+      document.getElementById('loginMessage').textContent = '';
+      document.getElementById('registerMessage').textContent = '';
+    }
 
-      const email = emailInput.value.trim();
-      const password = passwordInput.value.trim();
+    function handleLogin() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      const msg = document.getElementById('loginMessage');
 
-      if (email === 'gauravsharma25861@gmail.com' && password === '123456') {
-        // Hide login, show welcome
-        loginBox.style.display = 'none';
-        welcomeBox.style.display = 'block';
+      const user = users.find(u => u.email === email && u.password === password);
+
+      if (user) {
+        msg.style.color = "green";
+        msg.textContent = "✅ Login successful! Welcome.";
       } else {
-        errorMessage.textContent = 'Invalid email or password';
+        msg.style.color = "red";
+        msg.textContent = "❌ Invalid email or password.";
       }
-    });
+    }
+
+    function handleRegister() {
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName = document.getElementById('lastName').value.trim();
+      const email = document.getElementById('registerEmail').value.trim();
+      const password = document.getElementById('registerPassword').value.trim();
+      const mobile = document.getElementById('mobile').value.trim();
+      const address = document.getElementById('address').value.trim();
+      const gender = document.getElementById('gender').value;
+
+      const msg = document.getElementById('registerMessage');
+
+      if (!firstName || !lastName || !email || !password || !mobile || !address || !gender) {
+        msg.style.color = "red";
+        msg.textContent = "❌ Please fill all fields.";
+        return;
+      }
+
+      const alreadyExists = users.some(u => u.email === email);
+      if (alreadyExists) {
+        msg.style.color = "red";
+        msg.textContent = "⚠️ Email already registered.";
+        return;
+      }
+
+      users.push({ email, password, firstName, lastName, mobile, address, gender });
+      msg.style.color = "green";
+      msg.textContent = "✅ Registered successfully! Please login.";
+      setTimeout(() => {
+        toggleForms();
+      }, 1500);
+    }
   </script>
 
 </body>
