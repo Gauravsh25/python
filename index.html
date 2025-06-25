@@ -5,35 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login Page</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: Arial, sans-serif;
-      background-color: #f0f4f8;
+      background-color: #eef2f5;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
-      margin: 0;
     }
-    .login-container {
+
+    .container {
       background: white;
       padding: 2rem;
       border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
       width: 100%;
       max-width: 400px;
     }
+
     h2 {
       text-align: center;
       margin-bottom: 1.5rem;
     }
+
     .form-group {
-      margin-bottom: 1rem;
+      margin-bottom: 1.2rem;
     }
+
     label {
       display: block;
       margin-bottom: 0.5rem;
       font-weight: bold;
     }
+
     input[type="email"],
     input[type="password"] {
       width: 100%;
@@ -42,9 +52,10 @@
       border-radius: 6px;
       font-size: 1rem;
     }
+
     button {
       width: 100%;
-      padding: 0.75rem;
+      padding: 0.7rem;
       background-color: #007bff;
       color: white;
       border: none;
@@ -52,46 +63,73 @@
       font-size: 1rem;
       cursor: pointer;
     }
+
     button:hover {
       background-color: #0056b3;
     }
+
     .error {
       color: red;
       text-align: center;
       margin-top: 10px;
     }
+
+    .welcome-message {
+      text-align: center;
+      display: none;
+    }
+
+    .welcome-message h1 {
+      color: #333;
+    }
+
+    .welcome-message p {
+      margin-top: 1rem;
+      color: #555;
+    }
   </style>
 </head>
 <body>
 
-  <div class="login-container">
+  <div class="container" id="loginBox">
     <h2>Login</h2>
     <form id="loginForm">
       <div class="form-group">
         <label for="email">Email ID</label>
         <input type="email" id="email" required placeholder="Enter your email" />
       </div>
-
       <div class="form-group">
         <label for="password">Password</label>
         <input type="password" id="password" required placeholder="Enter your password" />
       </div>
-
       <button type="submit">Login</button>
       <div class="error" id="errorMessage"></div>
     </form>
   </div>
 
+  <div class="container welcome-message" id="welcomeBox">
+    <h1>Welcome, Gaurav!</h1>
+    <p>You have successfully logged in.</p>
+  </div>
+
   <script>
-    document.getElementById('loginForm').addEventListener('submit', function (e) {
+    const loginForm = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const errorMessage = document.getElementById('errorMessage');
+    const loginBox = document.getElementById('loginBox');
+    const welcomeBox = document.getElementById('welcomeBox');
+
+    loginForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const errorMessage = document.getElementById('errorMessage');
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
 
       if (email === 'gauravsharma25861@gmail.com' && password === '123456') {
-        // Redirect to welcome page
-        window.location.href = 'welcome.html';
+        // Hide login, show welcome
+        loginBox.style.display = 'none';
+        welcomeBox.style.display = 'block';
       } else {
         errorMessage.textContent = 'Invalid email or password';
       }
