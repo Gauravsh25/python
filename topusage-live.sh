@@ -1,5 +1,5 @@
 #!/bin/bash
-# topusage-live.sh - Live monitor for Memory & CPU usage
+# topusage-live.sh - Live monitor for Memory & CPU usage with system stats
 
 while true; do
   clear
@@ -20,12 +20,21 @@ while true; do
   awk '{if(NR>1){printf "%s\t%s\t%s\n",$1,$2,$3}}'
 
   echo -e "\n============================================="
-  echo -e "   System Memory Usage"
+  echo -e "   System Usage Overview"
   echo -e "============================================="
+
+  # Memory usage in GB
   used=$(free -g | awk '/Mem:/ {print $3}')
   total=$(free -g | awk '/Mem:/ {print $2}')
-  echo -e "Total Used (GB): $used / $total GB"
+  mem_percent=$(free | awk '/Mem:/ {printf "%.1f", $3/$2*100}')
 
+  # CPU usage %
+  cpu_idle=$(top -bn1 | grep "Cpu(s)" | awk '{print $8}' | cut -d. -f1)
+  cpu_used=$((100 - cpu_idle))
+
+  echo -e "Memory Used : $used / $total GB ($mem_percent%)"
+  echo -e "CPU Usage   : $cpu_used%"
+  
   sleep 5   # refresh every 5 seconds
 done
 
