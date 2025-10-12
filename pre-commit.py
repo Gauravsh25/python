@@ -11,13 +11,13 @@ import subprocess
 # Patterns to detect sensitive information
 SENSITIVE_PATTERNS = {
     'AWS Access Key': r'AKIA[0-9A-Z]{16}',
-    'AWS Secret Key': r'aws(.{0,20})?['\''"][0-9a-zA-Z\/+]{40}['\''"]',
-    'Generic API Key': r'api[_-]?key['\''"\s:=]+[a-zA-Z0-9_\-]{20,}',
-    'Generic Secret': r'secret['\''"\s:=]+[a-zA-Z0-9_\-]{20,}',
-    'Password in Code': r'password['\''"\s:=]+[^\s]{8,}',
+    'AWS Secret Key': r'aws(.{0,20})?[\'"][0-9a-zA-Z\/+]{40}[\'"]',
+    'Generic API Key': r'api[_-]?key[\'""\s:=]+[a-zA-Z0-9_\-]{20,}',
+    'Generic Secret': r'secret[\'""\s:=]+[a-zA-Z0-9_\-]{20,}',
+    'Password in Code': r'password[\'""\s:=]+[^\s]{8,}',
     'Private Key': r'-----BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-----',
     'GitHub Token': r'gh[pousr]_[A-Za-z0-9_]{36,}',
-    'Generic Token': r'token['\''"\s:=]+[a-zA-Z0-9_\-]{20,}',
+    'Generic Token': r'token[\'""\s:=]+[a-zA-Z0-9_\-]{20,}',
     'Slack Token': r'xox[baprs]-[0-9]{10,13}-[0-9]{10,13}-[a-zA-Z0-9]{24,}',
     'Google API Key': r'AIza[0-9A-Za-z_\-]{35}',
     'Bearer Token': r'Bearer\s+[a-zA-Z0-9_\-\.=]+',
